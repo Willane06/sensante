@@ -67,104 +67,108 @@ comparison = pd.DataFrame({
 })
 print(comparison)
 
-from sklearn . metrics import accuracy_score
-accuracy = accuracy_score ( y_test , y_pred )
-print ( f" Accuracy : { accuracy :.2%} ")
+from sklearn.metrics import accuracy_score
+accuracy = accuracy_score(y_test, y_pred)
+print(f"Accuracy : {accuracy:.2%}")
 
-from sklearn . metrics import confusion_matrix , classification_report
-import matplotlib . pyplot as plt
+from sklearn.metrics import confusion_matrix, classification_report
+import matplotlib.pyplot as plt
 import seaborn as sns
+import os
+
+# Creer le dossier figures s'il n'existe pas
+os.makedirs("figures", exist_ok=True)
 
 # Matrice de confusion
-cm = confusion_matrix ( y_test , y_pred , labels = model . classes_ )
-print (" Matrice de confusion :")
-print ( cm )
+cm = confusion_matrix(y_test, y_pred, labels=model.classes_)
+print("Matrice de confusion :")
+print(cm)
 
 # Rapport de classification
-print ("\ nRapport de classification :")
-print ( classification_report ( y_test , y_pred ) )
+print("\nRapport de classification :")
+print(classification_report(y_test, y_pred))
 
 # Visualiser avec seaborn
-plt . figure ( figsize =(8 , 6) )
-sns . heatmap ( cm , annot = True , fmt ='d', cmap ='Blues ',
-                xticklabels = model . classes_ ,
-                yticklabels = model . classes_ )
-plt . xlabel ('Prediction du modele ')
-plt . ylabel ('Vrai diagnostic ')
-plt . title ('Matrice de confusion - SenSante ')
-plt . tight_layout ()
-plt . savefig ('figures / confusion_matrix .png ', dpi =150)
-plt . show ()
-print (" Figure sauvegardee dans figures / confusion_matrix .png")
+plt.figure(figsize=(8, 6))
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
+            xticklabels=model.classes_,
+            yticklabels=model.classes_)
+plt.xlabel('Prediction du modele')
+plt.ylabel('Vrai diagnostic')
+plt.title('Matrice de confusion - SenSante')
+plt.tight_layout()
+plt.savefig('figures/confusion_matrix.png', dpi=150)
+print("Figure sauvegardee dans figures/confusion_matrix.png")
 
 import joblib
 import os
-# Creer le dossier models / s'il n'existe pas
-os . makedirs (" models ", exist_ok = True )
+
+# Creer le dossier models s'il n'existe pas
+os.makedirs("models", exist_ok=True)
 # Serialiser le modele
-joblib . dump ( model , " models / model . pkl")
+joblib.dump(model, "models/model.pkl")
 # Verifier la taille du fichier
-size = os . path . getsize (" models / model . pkl")
-print ( f" Modele sauvegarde : models / model .pkl")
-print ( f" Taille : { size / 1024:.1 f} Ko")
+size = os.path.getsize("models/model.pkl")
+print(f"Modele sauvegarde : models/model.pkl")
+print(f"Taille : {size / 1024:.1f} Ko")
 
-# Sauvegarder les encodeurs ( indispensables pour les nouvelles donnees )
-joblib . dump ( le_sexe , " models / encoder_sexe .pkl ")
-joblib . dump ( le_region , " models / encoder_region .pkl")
+# Sauvegarder les encodeurs (indispensables pour les nouvelles donnees)
+joblib.dump(le_sexe, "models/encoder_sexe.pkl")
+joblib.dump(le_region, "models/encoder_region.pkl")
 
-# Sauvegarder la liste des features ( pour reference )
-joblib . dump ( feature_cols , " models / feature_cols .pkl")
+# Sauvegarder la liste des features (pour reference)
+joblib.dump(feature_cols, "models/feature_cols.pkl")
 
-print (" Encodeurs et metadata sauvegardes .")
+print("Encodeurs et metadata sauvegardes.")
 
 # Simuler ce que fera l'API en Lab 3 :
-# Charger le modele DEPUIS LE FICHIER (pas depuis la memoire )
-model_loaded = joblib . load (" models / model . pkl ")
-le_sexe_loaded = joblib . load (" models / encoder_sexe .pkl ")
-le_region_loaded = joblib . load (" models / encoder_region .pkl")
+# Charger le modele DEPUIS LE FICHIER (pas depuis la memoire)
+model_loaded = joblib.load("models/model.pkl")
+le_sexe_loaded = joblib.load("models/encoder_sexe.pkl")
+le_region_loaded = joblib.load("models/encoder_region.pkl")
 
-print ( f" Modele recharge : { type ( model_loaded ). __name__ }")
-print ( f" Classes : { list ( model_loaded . classes_ )}")
+print(f"Modele recharge : {type(model_loaded).__name__}")
+print(f"Classes : {list(model_loaded.classes_)}")
 
 # Un nouveau patient arrive au centre de sante de Medina
 nouveau_patient = {
-'age ': 28 ,
-'sexe ': 'F',
-'temperature ': 39.5 ,
-'tension_sys ': 110 ,
-'toux ': True ,
-'fatigue ': True ,
-'maux_tete ': True ,
-'region ': 'Dakar '
+'age': 28,
+'sexe': 'F',
+'temperature': 39.5,
+'tension_sys': 110,
+'toux': True,
+'fatigue': True,
+'maux_tete': True,
+'region': 'Dakar'
 }
 
 # Encoder les valeurs categoriques
-sexe_enc = le_sexe_loaded . transform ([ nouveau_patient ['sexe ']]) [0]
-region_enc = le_region_loaded . transform ([ nouveau_patient ['region ']]) [0]
+sexe_enc = le_sexe_loaded.transform([nouveau_patient['sexe']])[0]
+region_enc = le_region_loaded.transform([nouveau_patient['region']])[0]
 
 # Preparer le vecteur de features
 features = [
-nouveau_patient ['age '] ,
-sexe_enc ,
-nouveau_patient ['temperature '] ,
-Intégration de Modèles IA Lab 2 : Entraîner et Sérialiser un Modèle
-
-nouveau_patient ['tension_sys '] ,
-int( nouveau_patient ['toux ']) ,
-int( nouveau_patient ['fatigue ']) ,
-int( nouveau_patient ['maux_tete ']) ,
+nouveau_patient['age'],
+sexe_enc,
+nouveau_patient['temperature'],
+nouveau_patient['tension_sys'],
+int(nouveau_patient['toux']),
+int(nouveau_patient['fatigue']),
+int(nouveau_patient['maux_tete']),
 region_enc
 ]
 
 # Predire
-diagnostic = model_loaded . predict ([ features ]) [0]
-probas = model_loaded . predict_proba ([ features ]) [0]
-proba_max = probas .max ()
-print ( f"\n- - - Resultat du pre - diagnostic ---")
-print ( f" Patient : { nouveau_patient [ ' sexe ']} , { nouveau_patient [ ' age ']} ans")
-print ( f" Diagnostic : { diagnostic }")
-print ( f" Probabilite : { proba_max :.1%} ")
-print ( f"\ nProbabilites par classe :")
-for classe , proba in zip( model_loaded . classes_ , probas ) :
-    bar = '#' * int ( proba * 30)
-    print ( f" { classe :8s} : { proba :.1%} {bar}")
+diagnostic = model_loaded.predict([features])[0]
+probas = model_loaded.predict_proba([features])[0]
+proba_max = probas.max()
+print(f"\n--- Resultat du pre-diagnostic ---")
+print(f"Patient : {nouveau_patient['sexe']}, {nouveau_patient['age']} ans")
+print(f"Diagnostic : {diagnostic}")
+print(f"Probabilite : {proba_max:.1%}")
+print(f"\nProbabilites par classe :")
+for classe, proba in zip(model_loaded.classes_, probas):
+    bar = '#' * int(proba * 30)
+    print(f"{classe:8s} : {proba:.1%} {bar}")
+
+    
